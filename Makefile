@@ -1,14 +1,17 @@
-# Makefile for kacchiOS
 CC = gcc
 LD = ld
 AS = as
 
 CFLAGS = -m32 -ffreestanding -O2 -Wall -Wextra -nostdinc \
-         -fno-builtin -fno-stack-protector -I.
+         -fno-builtin -fno-stack-protector -fno-pie \
+         -fno-omit-frame-pointer -I.
+
 ASFLAGS = --32
 LDFLAGS = -m elf_i386
 
-OBJS = boot.o kernel.o serial.o string.o
+OBJS = boot.o kernel.o serial.o string.o \
+       memory.o process.o scheduler.o ipc.o \
+       interrupts.o interrupt_stubs.o timer.o
 
 all: kernel.elf
 
@@ -28,9 +31,7 @@ run-vga: kernel.elf
 	qemu-system-i386 -kernel kernel.elf -m 64M -serial mon:stdio
 
 debug: kernel.elf
-	qemu-system-i386 -kernel kernel.elf -m 64M -serial stdio -display none -s -S &
-	@echo "Waiting for GDB connection on port 1234..."
-	@echo "In another terminal run: gdb -ex 'target remote localhost:1234' -ex 'symbol-file kernel.elf'"
+	qemu-system-i386 -kernel kernel.elf -m 64M -serial stdio -display none -no-reboot -no-shutdown -s -S
 
 clean:
 	rm -f *.o kernel.elf
